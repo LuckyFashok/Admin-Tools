@@ -6,7 +6,7 @@ set admintools=%~nx0
 set admintoolsname=%~n0
 :: НЕ ЗАБЫВАЙ МЕНЯТЬ ВЕРСИЮ ПРИ ОБНОВЛЕНИИ
 ::					\/
-set admintoolsver=1.37
+set admintoolsver=1.36
 ::					/\
 :: НЕ ЗАБЫВАЙ МЕНЯТЬ ВЕРСИЮ ПРИ ОБНОВЛЕНИИ
 set /a loading=1+%random% %% 9
@@ -24,8 +24,16 @@ for /f "tokens=*" %%p in ('type password.txt') do set pw=%%p
 for /f "tokens=*" %%u in ('type user.txt') do set yourname=%%u
 for /f "tokens=1" %%t in ('type terminal.txt') do set term=%%t
 if "%yourname%"=="myname" set yourname=%username%
+if exist "Lock3.txt" (
+	set TheMostBigLockCheater=true
+	goto блокировка
+)
+if exist "Lock2.txt" (
+	set MostLockCheater=true
+	goto блокировка
+)
 if exist "Lock.txt" (
-	for /f "tokens=1" %%l in ('type Lock.txt') do set Locker=%%l
+	set LockCheater=true
 	goto блокировка
 )
 set /a countoferror=0
@@ -48,7 +56,8 @@ set /a countoferror=0
 title Блокировка программы
 cd "%ATP%"
 cls
-if "%Locker%"=="LV3" (
+if "%TheMostBigLockCheater%"=="true" (
+	del Lock2.txt
 	for /l %%p in (300,-1,0) do (
 		cls
 		echo Лови бан на 5 минут что бы знал
@@ -56,13 +65,12 @@ if "%Locker%"=="LV3" (
 		echo Осталось %%p секунд что бы программа разблокировалась.
 		timeout 1 /nobreak >nul
 	)
-	attrib -H "Lock.txt"
-	del Lock.txt
+	set TheMostBigLockCheater=
+	del Lock3.txt
 	goto пароль
-) else if "%Locker%"=="LV2" (
-	attrib -H "lock.txt"
-	echo LV3> Lock.txt
-	attrib +H "Lock.txt"
+) else if "%MostLockCheater%"=="true" (
+	type nul > Lock3.txt
+	del Lock2.txt
 	for /l %%p in (120,-1,0) do (
 		cls
 		echo Почему ты просто не послушаешься
@@ -73,13 +81,12 @@ if "%Locker%"=="LV3" (
 		echo Осталось %%p секунд что бы программа разблокировалась.
 		timeout 1 /nobreak >nul
 	)
-	attrib -H "Lock.txt"
-	del Lock.txt
+	set MostLockCheater=
+	del Lock3.txt
 	goto пароль
-) else if "%Locker%"=="LV1" (
-	attrib -H "Lock.txt"
-	echo LV2> Lock.txt
-	attrib +H "lock.txt"
+) else if "%LockCheater%"=="true" (
+	type nul > Lock2.txt
+	del Lock.txt
 	for /l %%p in (60,-1,0) do (
 		cls
 		echo Ты видимо не читаешь предупреждение
@@ -89,12 +96,11 @@ if "%Locker%"=="LV3" (
 		echo Осталось %%p секунд что бы программа разблокировалась.
 		timeout 1 /nobreak >nul
 	)
-	attrib -H "Lock.txt"
-	del Lock.txt
+	set LockCheater=
+	del Lock2.txt
 	goto пароль
 )
-echo LV1> Lock.txt
-attrib +H "Lock.txt"
+type nul > Lock.txt
 for /l %%p in (30,-1,0) do (
 	cls
 	echo ! ! ! Внимание ! ! !
@@ -105,11 +111,9 @@ for /l %%p in (30,-1,0) do (
 	echo Осталось %%p секунд что бы программа разблокировала доступ к вводу пароля.
 	timeout 1 /nobreak >nul
 )
-attrib -H "Lock.txt"
 del Lock.txt
 goto пароль
 :меню
-set /a countoferror=0
 Title %admintoolsname%
 cls
 echo Здраствуйте, %yourname%.
@@ -258,19 +262,17 @@ echo Папка пользователя:		%userprofile%;
 echo Текущий путь к Инструментам:	%mypath%;
 echo Текущий вес файла:		%filesize%;
 echo Текущая версия Инструментов:	%admintoolsver%;
-echo Системная папка gwords:		%ATP%;[Y - изменить расположение]
+echo Системная папка gwords:		%ATP%;
 echo Текущая дата:			%date%.
 echo U - изменения в новой версии.
 echo O - выйти.
-choice /c UOY /n
+choice /c UO /n
 if %errorlevel% equ 1 goto Изменения_в_админтулс
 if %errorlevel% equ 2 goto настройки
-if %errorlevel% equ 3 goto изменить_расположение_gwords
 :Изменения_в_админтулс
 :: НЕ ЗАБЫВАЙ ДОБАВЛЯТЬ ИЗМЕНЕНИЯ
 :: \/ \/ \/
 cls
-echo 1.37 : добавлена возможность переместить папку gwords, улучшили интерфейс в OOBE при не подтверждении пароля, исправление багов.
 echo 1.36 : добавлена дата(я знаю что очевидно, просто всё равно нужно написать), повышена безопасность.
 echo 1.35 : кнопка "E" в управление паролями пропадает если нету пароля.
 echo 1.34 : Теперь нельзя вводить пустое имя пользователя при изменении.
@@ -282,55 +284,6 @@ choice /c O /n
 if %errorlevel% equ 1 goto сведенияос
 :: /\ /\ /\
 :: НЕ ЗАБЫВАЙ ДОБАВЛЯТЬ ИЗМЕНЕНИЯ
-:изменить_расположение_gwords
-title Изменение расположения папки gwords
-set newATP=
-cls
-set /p newATP=Введите новое расположение системной папки gwords(O - выйти):
-if /i "%newATP%"=="o" goto сведенияос
-if "%newATP%"=="" (
-	cls
-	echo Поле не может быть пустым.
-	pause
-	goto изменить_расположение_gwords
-)
-call set newATP=%newATP%
-if "%newATP%\gwords"=="%ATP%" (
-	cls
-	echo В таком расположении уже есть папка gwords, пожалуйста, выберите другое.
-	pause
-	goto изменить_расположение_gwords
-)
-cd "%newATP%"
-if %errorlevel% geq 1 (
-	cls
-	echo Такого расположения не существует, пожалуйста, введите другое.
-	pause
-	goto изменить_расположение_gwords
-)
-cls
-echo Вы точно хотите изменить расположение папки gwords из
-echo "%ATP%" в "%newATP%\gwords"?
-echo Y - да;
-echo N - нет.
-choice /n
-if %errorlevel% equ 1 (
-	cls
-	md gwords
-	move "%ATP%\password.txt" "%newATP%\gwords"
-	move "%ATP%\user.txt" "%newATP%\gwords"
-	move "%ATP%\oobe.txt" "%newATP%\gwords"
-	move "%ATP%\terminal.txt" "%newATP%\gwords"
-	move "%ATP%\bios.bat" "%newATP%\gwords"
-	cd "%newATP%"
-	attrib +H gwords
-	cd "%ATP%"
-	cd ..
-	rd /s /q gwords
-	setx ATP "%newATP%\gwords"
-	set ATP=%newATP%\gwords
-	goto настройки
-) else if %errorlevel% equ 2 goto настройки
 :калькулятор
 cls
 echo Выберите способ калькулятора:
@@ -1092,9 +1045,6 @@ echo ----------------------------------
 set /p vhod=Теперь подверди свой пароль:
 if "%vhod%"=="%npw%" (goto ждатьнастройки) else (
 	cls
-	echo 1 Этап	2 Этап	3 Этап	Применение
-	echo 		======
-	echo ----------------------------------
 	echo Ты не подвердил свой пароль, придумывай заново.
 	pause
 	goto 3этап
@@ -1168,19 +1118,17 @@ for /l %%i in (0,%screenofdeath%,100) do (
 cd "%mypath%"
 start "" "%admintools%" & exit
 :помощник-настройки
-title помощник_настройки
-set ATpath=
 cls
 echo Введите расположение куда
 echo сохранить папку конфигурации
-set /p ATpath=для работы Инструментов Администратора(пустое поле сохранит его в папку текущего пользователя):
+set /p ATpath=для работы Инструментов Администратора:
 if "%ATpath%"=="" set "ATpath=%userprofile%"
 call set ATpath=%ATpath%
 cls
 cd "%ATpath%"
 if %errorlevel% geq 1 (
 	cls
-	echo Такого пути не существует, пожалуйста, введите ещё раз.
+	echo Такого пути не существует, пожалуйста введите ещё раз.
 	pause
 	goto помощник-настройки
 )
